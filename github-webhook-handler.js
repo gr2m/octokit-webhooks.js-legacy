@@ -1,32 +1,23 @@
-const EventEmitter = require('events').EventEmitter
-    , inherits     = require('util').inherits
-    , crypto       = require('crypto')
-    , bl           = require('bl')
-    , bufferEq     = require('buffer-equal-constant-time')
-
+const EventEmitter = require('events').EventEmitter,
+  inherits = require('util').inherits,
+  crypto = require('crypto'),
+  bl = require('bl'),
+  bufferEq = require('buffer-equal-constant-time')
 
 function signBlob (key, blob) {
   return 'sha1=' + crypto.createHmac('sha1', key).update(blob).digest('hex')
 }
 
-
 function create (options) {
-  if (typeof options != 'object')
-    throw new TypeError('must provide an options object')
+  if (typeof options !== 'object') { throw new TypeError('must provide an options object') }
 
-  if (typeof options.path != 'string')
-    throw new TypeError('must provide a \'path\' option')
+  if (typeof options.path !== 'string') { throw new TypeError('must provide a \'path\' option') }
 
-  if (typeof options.secret != 'string')
-    throw new TypeError('must provide a \'secret\' option')
+  if (typeof options.secret !== 'string') { throw new TypeError('must provide a \'secret\' option') }
 
   var events
 
-  if (typeof options.events == 'string' && options.events != '*')
-    events = [ options.events ]
-
-  else if (Array.isArray(options.events) && options.events.indexOf('*') == -1)
-    events = options.events
+  if (typeof options.events === 'string' && options.events != '*') { events = [ options.events ] } else if (Array.isArray(options.events) && options.events.indexOf('*') == -1) { events = options.events }
 
   // make it an EventEmitter, sort of
   handler.__proto__ = EventEmitter.prototype
@@ -34,10 +25,8 @@ function create (options) {
 
   return handler
 
-
   function handler (req, res, callback) {
-    if (req.url.split('?').shift() !== options.path || req.method !== 'POST')
-      return callback()
+    if (req.url.split('?').shift() !== options.path || req.method !== 'POST') { return callback() }
 
     function hasError (msg) {
       res.writeHead(400, { 'content-type': 'application/json' })
@@ -49,21 +38,17 @@ function create (options) {
       callback(err)
     }
 
-    var sig   = req.headers['x-hub-signature']
-      , event = req.headers['x-github-event']
-      , id    = req.headers['x-github-delivery']
+    var sig = req.headers['x-hub-signature'],
+      event = req.headers['x-github-event'],
+      id = req.headers['x-github-delivery']
 
-    if (!sig)
-      return hasError('No X-Hub-Signature found on request')
+    if (!sig) { return hasError('No X-Hub-Signature found on request') }
 
-    if (!event)
-      return hasError('No X-Github-Event found on request')
+    if (!event) { return hasError('No X-Github-Event found on request') }
 
-    if (!id)
-      return hasError('No X-Github-Delivery found on request')
+    if (!id) { return hasError('No X-Github-Delivery found on request') }
 
-    if (events && events.indexOf(event) == -1)
-      return hasError('X-Github-Event is not acceptable')
+    if (events && events.indexOf(event) == -1) { return hasError('X-Github-Event is not acceptable') }
 
     req.pipe(bl(function (err, data) {
       if (err) {
@@ -73,8 +58,7 @@ function create (options) {
       var obj
       var computedSig = new Buffer(signBlob(options.secret, data))
 
-      if (!bufferEq(new Buffer(sig), computedSig))
-        return hasError('X-Hub-Signature does not match blob signature')
+      if (!bufferEq(new Buffer(sig), computedSig)) { return hasError('X-Hub-Signature does not match blob signature') }
 
       try {
         obj = JSON.parse(data.toString())
@@ -86,12 +70,12 @@ function create (options) {
       res.end('{"ok":true}')
 
       var emitData = {
-          event   : event
-        , id      : id
-        , payload : obj
-        , protocol: req.protocol
-        , host    : req.headers['host']
-        , url     : req.url
+        event: event,
+        id: id,
+        payload: obj,
+        protocol: req.protocol,
+        host: req.headers['host'],
+        url: req.url
       }
 
       handler.emit(event, emitData)
@@ -99,6 +83,5 @@ function create (options) {
     }))
   }
 }
-
 
 module.exports = create
