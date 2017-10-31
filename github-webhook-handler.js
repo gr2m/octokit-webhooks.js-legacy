@@ -20,7 +20,7 @@ function create (options) {
     throw new TypeError('must provide a \'secret\' option')
   }
 
-  var events
+  let events
 
   if (typeof options.events === 'string' && options.events !== '*') {
     events = [ options.events ]
@@ -43,15 +43,15 @@ function create (options) {
       res.writeHead(400, { 'content-type': 'application/json' })
       res.end(JSON.stringify({ error: msg }))
 
-      var err = new Error(msg)
+      const err = new Error(msg)
 
       handler.emit('error', err, req)
       callback(err)
     }
 
-    var sig = req.headers['x-hub-signature']
-    var event = req.headers['x-github-event']
-    var id = req.headers['x-github-delivery']
+    const sig = req.headers['x-hub-signature']
+    const event = req.headers['x-github-event']
+    const id = req.headers['x-github-delivery']
 
     if (!sig) {
       return hasError('No X-Hub-Signature found on request')
@@ -74,8 +74,8 @@ function create (options) {
         return hasError(err.message)
       }
 
-      var obj
-      var computedSig = Buffer.from(signBlob(options.secret, data))
+      let obj
+      const computedSig = Buffer.from(signBlob(options.secret, data))
 
       if (!bufferEq(Buffer.from(sig), computedSig)) {
         return hasError('X-Hub-Signature does not match blob signature')
@@ -90,7 +90,7 @@ function create (options) {
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end('{"ok":true}')
 
-      var emitData = {
+      const emitData = {
         event: event,
         id: id,
         payload: obj,
