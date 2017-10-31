@@ -8,11 +8,17 @@ function signBlob (key, blob) {
 }
 
 function create (options) {
-  if (typeof options !== 'object') { throw new TypeError('must provide an options object') }
+  if (typeof options !== 'object') {
+    throw new TypeError('must provide an options object')
+  }
 
-  if (typeof options.path !== 'string') { throw new TypeError('must provide a \'path\' option') }
+  if (typeof options.path !== 'string') {
+    throw new TypeError('must provide a \'path\' option')
+  }
 
-  if (typeof options.secret !== 'string') { throw new TypeError('must provide a \'secret\' option') }
+  if (typeof options.secret !== 'string') {
+    throw new TypeError('must provide a \'secret\' option')
+  }
 
   var events
 
@@ -29,7 +35,9 @@ function create (options) {
   return handler
 
   function handler (req, res, callback) {
-    if (req.url.split('?').shift() !== options.path || req.method !== 'POST') { return callback() }
+    if (req.url.split('?').shift() !== options.path || req.method !== 'POST') {
+      return callback()
+    }
 
     function hasError (msg) {
       res.writeHead(400, { 'content-type': 'application/json' })
@@ -69,7 +77,9 @@ function create (options) {
       var obj
       var computedSig = Buffer.from(signBlob(options.secret, data))
 
-      if (!bufferEq(Buffer.from(sig), computedSig)) { return hasError('X-Hub-Signature does not match blob signature') }
+      if (!bufferEq(Buffer.from(sig), computedSig)) {
+        return hasError('X-Hub-Signature does not match blob signature')
+      }
 
       try {
         obj = JSON.parse(data.toString())

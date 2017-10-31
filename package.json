@@ -4,7 +4,8 @@
   "description": "Web handler / middleware for processing GitHub Webhooks",
   "main": "github-webhook-handler.js",
   "scripts": {
-    "test": "node test.js && standard"
+    "test": "node test.js",
+    "posttest": "standard"
   },
   "keywords": [
     "github",
