@@ -1,3 +1,5 @@
+'use strict'
+
 const EventEmitter = require('events').EventEmitter
 const crypto = require('crypto')
 const bl = require('bl')

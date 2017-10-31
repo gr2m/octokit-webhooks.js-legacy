@@ -1,3 +1,5 @@
+'use strict'
+
 const test = require('tape')
 const crypto = require('crypto')
 const handler = require('./')
