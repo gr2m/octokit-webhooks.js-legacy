@@ -5,10 +5,6 @@ const crypto = require('crypto')
 const bl = require('bl')
 const bufferEq = require('buffer-equal-constant-time')
 
-function signBlob (key, blob) {
-  return 'sha1=' + crypto.createHmac('sha1', key).update(blob).digest('hex')
-}
-
 function create (options) {
   if (typeof options !== 'object') {
     throw new TypeError('must provide an options object')
@@ -34,7 +30,18 @@ function create (options) {
   handler.__proto__ = EventEmitter.prototype // eslint-disable-line
   EventEmitter.call(handler)
 
+  handler.sign = sign
+  handler.verify = verify
+
   return handler
+
+  function sign (data) {
+    return 'sha1=' + crypto.createHmac('sha1', options.secret).update(data).digest('hex')
+  }
+
+  function verify (signature, data) {
+    return bufferEq(Buffer.from(signature), Buffer.from(sign(data)))
+  }
 
   function handler (req, res, callback) {
     if (req.url.split('?').shift() !== options.path || req.method !== 'POST') {
@@ -76,10 +83,9 @@ function create (options) {
         return hasError(err.message)
       }
 
-      let obj
-      const computedSig = Buffer.from(signBlob(options.secret, data))
+      var obj
 
-      if (!bufferEq(Buffer.from(sig), computedSig)) {
+      if (!verify(sig, data)) {
         return hasError('X-Hub-Signature does not match blob signature')
       }
 

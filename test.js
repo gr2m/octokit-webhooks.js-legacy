@@ -1,15 +1,9 @@
 'use strict'
 
 const test = require('tape')
-const crypto = require('crypto')
 const handler = require('./')
 const through2 = require('through2')
 const series = require('run-series')
-
-function signBlob (key, blob) {
-  return 'sha1=' +
-  crypto.createHmac('sha1', key).update(blob).digest('hex')
-}
 
 function mkReq (url, method) {
   const req = through2()
@@ -196,7 +190,7 @@ test('handler accepts a signed blob', function (t) {
   const req = mkReq('/')
   const res = mkRes()
 
-  req.headers['x-hub-signature'] = signBlob('bogus', json)
+  req.headers['x-hub-signature'] = h.sign(json)
   req.headers['x-github-event'] = 'push'
 
   h.on('push', function (event) {
@@ -225,7 +219,7 @@ test('handler accepts a signed blob with alt event', function (t) {
   const req = mkReq('/')
   const res = mkRes()
 
-  req.headers['x-hub-signature'] = signBlob('bogus', json)
+  req.headers['x-hub-signature'] = h.sign(json)
   req.headers['x-github-event'] = 'issue'
 
   h.on('push', function (event) {
@@ -258,7 +252,7 @@ test('handler rejects a badly signed blob', function (t) {
   const req = mkReq('/')
   const res = mkRes()
 
-  req.headers['x-hub-signature'] = signBlob('bogus', json)
+  req.headers['x-hub-signature'] = h.sign(json)
   // break signage by a tiny bit
   req.headers['x-hub-signature'] = '0' + req.headers['x-hub-signature'].substring(1)
 
@@ -292,7 +286,7 @@ test('handler responds on a bl error', function (t) {
   const req = mkReq('/')
   const res = mkRes()
 
-  req.headers['x-hub-signature'] = signBlob('bogus', json)
+  req.headers['x-hub-signature'] = h.sign(json)
   req.headers['x-github-event'] = 'issue'
 
   h.on('push', function (event) {
@@ -320,4 +314,15 @@ test('handler responds on a bl error', function (t) {
   process.nextTick(function () {
     req.emit('error', new Error('simulated explosion'))
   })
+})
+
+test('handler exposes sign and verify methods', function (t) {
+  t.plan(3)
+
+  var h = handler({ path: '/', secret: 'bogus' })
+  var json = JSON.stringify({foo: 'bar'})
+
+  t.ok(h.verify(h.sign(json), json))
+  t.ok(!h.verify(h.sign(json), 'nope'))
+  t.ok(!h.verify(h.sign('nope'), json))
 })
