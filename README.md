@@ -16,9 +16,9 @@ In Github Webhooks settings, Content type must be `application/json`.
 ## Example
 
 ```js
-var http = require('http')
-var createHandler = require('github-webhook-handler')
-var handler = createHandler({ path: '/webhook', secret: 'myhashsecret' })
+const http = require('http')
+const createHandler = require('github-webhook-handler')
+const handler = createHandler({ path: '/webhook', secret: 'myhashsecret' })
 
 http.createServer(function (req, res) {
   handler(req, res, function (err) {
@@ -65,7 +65,7 @@ See the [GitHub Webhooks documentation](https://developer.github.com/webhooks/) 
 Included in the distribution is an *events.json* file which maps the event names to descriptions taken from the API:
 
 ```js
-var events = require('github-webhook-handler/events')
+const events = require('github-webhook-handler/events')
 Object.keys(events).forEach(function (event) {
   console.log(event, '=', events[event])
 })
