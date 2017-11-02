@@ -1,44 +1,42 @@
-const test     = require('tape')
-    , crypto   = require('crypto')
-    , handler  = require('./')
-    , through2 = require('through2')
-    , series   = require('run-series')
+'use strict'
 
+const test = require('tape')
+const crypto = require('crypto')
+const handler = require('./')
+const through2 = require('through2')
+const series = require('run-series')
 
 function signBlob (key, blob) {
   return 'sha1=' +
   crypto.createHmac('sha1', key).update(blob).digest('hex')
 }
 
-
 function mkReq (url, method) {
-  var req = through2()
+  const req = through2()
   req.method = method || 'POST'
   req.url = url
   req.headers = {
-      'x-hub-signature'   : 'bogus'
-    , 'x-github-event'    : 'bogus'
-    , 'x-github-delivery' : 'bogus'
+    'x-hub-signature': 'bogus',
+    'x-github-event': 'bogus',
+    'x-github-delivery': 'bogus'
   }
   return req
 }
 
-
 function mkRes () {
-  var res = {
-      writeHead : function (statusCode, headers) {
-        res.$statusCode = statusCode
-        res.$headers = headers
-      }
+  const res = {
+    writeHead: function (statusCode, headers) {
+      res.$statusCode = statusCode
+      res.$headers = headers
+    },
 
-    , end       : function (content) {
-        res.$end = content
-      }
+    end: function (content) {
+      res.$end = content
+    }
   }
 
   return res
 }
-
 
 test('handler without full options throws', function (t) {
   t.plan(4)
@@ -52,10 +50,9 @@ test('handler without full options throws', function (t) {
   t.throws(handler.bind(null, { path: '/' }), /must provide a 'secret' option/, 'throws if no secret option')
 })
 
-
 test('handler ignores invalid urls', function (t) {
-  var options = { path: '/some/url', secret: 'bogus' }
-    , h       = handler(options)
+  const options = { path: '/some/url', secret: 'bogus' }
+  const h = handler(options)
 
   t.plan(6)
 
@@ -78,8 +75,8 @@ test('handler ignores invalid urls', function (t) {
 })
 
 test('handler ingores non-POST requests', function (t) {
-  var options = { path: '/some/url', secret: 'bogus' }
-    , h       = handler(options)
+  const options = { path: '/some/url', secret: 'bogus' }
+  const h = handler(options)
 
   t.plan(4)
 
@@ -95,8 +92,8 @@ test('handler ingores non-POST requests', function (t) {
 })
 
 test('handler accepts valid urls', function (t) {
-  var options = { path: '/some/url', secret: 'bogus' }
-    , h       = handler(options)
+  const options = { path: '/some/url', secret: 'bogus' }
+  const h = handler(options)
 
   t.plan(1)
 
@@ -113,36 +110,35 @@ test('handler accepts valid urls', function (t) {
   setTimeout(t.ok.bind(t, true, 'done'))
 })
 
-
 test('handler can reject events', function (t) {
-  var acceptableEvents   = {
-          'undefined'                     : undefined
-        , 'a string equal to the event'   : 'bogus'
-        , 'a string equal to *'           : '*'
-        , 'an array containing the event' : ['bogus']
-        , 'an array containing *'         : ['not-bogus', '*']
-      }
-    , unacceptableEvents = {
-          'a string not equal to the event or *'   : 'not-bogus'
-        , 'an array not containing the event or *' : ['not-bogus']
-      }
-    , acceptable         = Object.keys(acceptableEvents)
-    , unacceptable       = Object.keys(unacceptableEvents)
-    , acceptableTests    = acceptable.map(function (events) {
-        return acceptableReq.bind(null, events)
-      })
-    , unacceptableTests  = unacceptable.map(function (events) {
-        return unacceptableReq.bind(null, events)
-      })
+  const acceptableEvents = {
+    'undefined': undefined,
+    'a string equal to the event': 'bogus',
+    'a string equal to *': '*',
+    'an array containing the event': ['bogus'],
+    'an array containing *': ['not-bogus', '*']
+  }
+  const unacceptableEvents = {
+    'a string not equal to the event or *': 'not-bogus',
+    'an array not containing the event or *': ['not-bogus']
+  }
+  const acceptable = Object.keys(acceptableEvents)
+  const unacceptable = Object.keys(unacceptableEvents)
+  const acceptableTests = acceptable.map(function (events) {
+    return acceptableReq.bind(null, events)
+  })
+  const unacceptableTests = unacceptable.map(function (events) {
+    return unacceptableReq.bind(null, events)
+  })
 
   t.plan(acceptable.length + unacceptable.length)
   series(acceptableTests.concat(unacceptableTests))
 
   function acceptableReq (events, callback) {
-    var h = handler({
-        path    : '/some/url'
-      , secret  : 'bogus'
-      , events  : acceptableEvents[events]
+    const h = handler({
+      path: '/some/url',
+      secret: 'bogus',
+      events: acceptableEvents[events]
     })
 
     h(mkReq('/some/url'), mkRes(), function (err) {
@@ -157,10 +153,10 @@ test('handler can reject events', function (t) {
   }
 
   function unacceptableReq (events, callback) {
-    var h = handler({
-        path    : '/some/url'
-      , secret  : 'bogus'
-      , events  : unacceptableEvents[events]
+    const h = handler({
+      path: '/some/url',
+      secret: 'bogus',
+      events: unacceptableEvents[events]
     })
 
     h.on('error', function () {})
@@ -172,12 +168,11 @@ test('handler can reject events', function (t) {
   }
 })
 
-
 // because we don't inherit in a traditional way
 test('handler is an EventEmitter', function (t) {
   t.plan(5)
 
-  var h = handler({ path: '/', secret: 'bogus' })
+  const h = handler({ path: '/', secret: 'bogus' })
 
   t.equal(typeof h.on, 'function', 'has h.on()')
   t.equal(typeof h.emit, 'function', 'has h.emit()')
@@ -192,18 +187,17 @@ test('handler is an EventEmitter', function (t) {
   t.throws(h.emit.bind(h, 'error', new Error('threw an error')), /threw an error/, 'acts like an EE')
 })
 
-
 test('handler accepts a signed blob', function (t) {
   t.plan(4)
 
-  var obj  = { some: 'github', object: 'with', properties: true }
-    , json = JSON.stringify(obj)
-    , h    = handler({ path: '/', secret: 'bogus' })
-    , req  = mkReq('/')
-    , res  = mkRes()
+  const obj = { some: 'github', object: 'with', properties: true }
+  const json = JSON.stringify(obj)
+  const h = handler({ path: '/', secret: 'bogus' })
+  const req = mkReq('/')
+  const res = mkRes()
 
   req.headers['x-hub-signature'] = signBlob('bogus', json)
-  req.headers['x-github-event']  = 'push'
+  req.headers['x-github-event'] = 'push'
 
   h.on('push', function (event) {
     t.deepEqual(event, { event: 'push', id: 'bogus', payload: obj, url: '/', host: undefined, protocol: undefined })
@@ -222,18 +216,17 @@ test('handler accepts a signed blob', function (t) {
   })
 })
 
-
 test('handler accepts a signed blob with alt event', function (t) {
   t.plan(4)
 
-  var obj  = { some: 'github', object: 'with', properties: true }
-    , json = JSON.stringify(obj)
-    , h    = handler({ path: '/', secret: 'bogus' })
-    , req  = mkReq('/')
-    , res  = mkRes()
+  const obj = { some: 'github', object: 'with', properties: true }
+  const json = JSON.stringify(obj)
+  const h = handler({ path: '/', secret: 'bogus' })
+  const req = mkReq('/')
+  const res = mkRes()
 
   req.headers['x-hub-signature'] = signBlob('bogus', json)
-  req.headers['x-github-event']  = 'issue'
+  req.headers['x-github-event'] = 'issue'
 
   h.on('push', function (event) {
     t.fail(true, 'should not get here!')
@@ -256,15 +249,14 @@ test('handler accepts a signed blob with alt event', function (t) {
   })
 })
 
-
 test('handler rejects a badly signed blob', function (t) {
   t.plan(6)
 
-  var obj  = { some: 'github', object: 'with', properties: true }
-    , json = JSON.stringify(obj)
-    , h    = handler({ path: '/', secret: 'bogus' })
-    , req  = mkReq('/')
-    , res  = mkRes()
+  const obj = { some: 'github', object: 'with', properties: true }
+  const json = JSON.stringify(obj)
+  const h = handler({ path: '/', secret: 'bogus' })
+  const req = mkReq('/')
+  const res = mkRes()
 
   req.headers['x-hub-signature'] = signBlob('bogus', json)
   // break signage by a tiny bit
@@ -294,14 +286,14 @@ test('handler rejects a badly signed blob', function (t) {
 test('handler responds on a bl error', function (t) {
   t.plan(4)
 
-  var obj  = { some: 'github', object: 'with', properties: true }
-    , json = JSON.stringify(obj)
-    , h    = handler({ path: '/', secret: 'bogus' })
-    , req  = mkReq('/')
-    , res  = mkRes()
+  const obj = { some: 'github', object: 'with', properties: true }
+  const json = JSON.stringify(obj)
+  const h = handler({ path: '/', secret: 'bogus' })
+  const req = mkReq('/')
+  const res = mkRes()
 
   req.headers['x-hub-signature'] = signBlob('bogus', json)
-  req.headers['x-github-event']  = 'issue'
+  req.headers['x-github-event'] = 'issue'
 
   h.on('push', function (event) {
     t.fail(true, 'should not get here!')
@@ -311,23 +303,21 @@ test('handler responds on a bl error', function (t) {
     t.fail(true, 'should never get here!')
   })
 
-  h.on('error', function(err) {
+  h.on('error', function (err) {
     t.ok(err, 'got an error')
     t.equal(res.$statusCode, 400, 'correct status code')
-  });
+  })
 
   h(req, res, function (err) {
     t.ok(err)
   })
 
-  var end = res.end
   res.end = function () {
     t.equal(res.$statusCode, 400, 'correct status code')
   }
 
   req.write('{')
-  process.nextTick(function() {
+  process.nextTick(function () {
     req.emit('error', new Error('simulated explosion'))
-  });
-
+  })
 })
