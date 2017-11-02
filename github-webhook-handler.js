@@ -1,6 +1,6 @@
 'use strict'
 
-const EventEmitter = require('events').EventEmitter
+const EventEmitter = require('events')
 const crypto = require('crypto')
 const bl = require('bl')
 const bufferEq = require('buffer-equal-constant-time')
@@ -27,8 +27,10 @@ function create (options) {
   }
 
   // make it an EventEmitter, sort of
-  handler.__proto__ = EventEmitter.prototype // eslint-disable-line
-  EventEmitter.call(handler)
+  const emitter = new EventEmitter()
+  handler.emit = emitter.emit.bind(emitter)
+  handler.on = emitter.on.bind(emitter)
+  handler.removeListener = emitter.removeListener.bind(emitter)
 
   handler.sign = sign
   handler.verify = verify
@@ -54,7 +56,7 @@ function create (options) {
 
       const err = new Error(msg)
 
-      handler.emit('error', err, req)
+      emitter.emit('error', err, req)
       callback(err)
     }
 
@@ -107,8 +109,8 @@ function create (options) {
         url: req.url
       }
 
-      handler.emit(event, emitData)
-      handler.emit('*', emitData)
+      emitter.emit(event, emitData)
+      emitter.emit('*', emitData)
     }))
   }
 }
