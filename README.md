@@ -54,22 +54,13 @@ github-webhook-handler exports a single function, use this function to *create* 
 
  * `"path"`: the complete case sensitive path/route to match when looking at `req.url` for incoming requests. Any request not matching this path will cause the callback function to the handler to be called (sometimes called the `next` handler).
  * `"secret"`: this is a hash key used for creating the SHA-1 HMAC signature of the JSON blob sent by GitHub. You should register the same secret key with GitHub. Any request not delivering a `X-Hub-Signature` that matches the signature generated using this key against the blob will be rejected and cause an `'error'` event (also the callback will be called with an `Error` object).
- * `"events"`: an optional array of whitelisted event types (see: *events.json*). If defined, any incoming request whose `X-Github-Event` can't be found in the whitelist will be rejected. If only a single event type is acceptable, this option can also be a string.
+ * `"events"`: an optional array of whitelisted [event types](https://developer.github.com/webhooks/). If defined, any incoming request whose `X-Github-Event` can't be found in the whitelist will be rejected. If only a single event type is acceptable, this option can also be a string.
 
 The resulting **handler** function acts like a common "middleware" handler that you can insert into a processing chain. It takes `request`, `response`, and `callback` arguments. The `callback` is not called if the request is successfully handled, otherwise it is called either with an `Error` or no arguments.
 
 The **handler** function is also an `EventEmitter` that you can register to listen to any of the GitHub event types. Note you can be specific in your GitHub configuration about which events you wish to receive, or you can send them all. Note that the `"error"` event will be liberally used, even if someone tries the end-point and they can't generate a proper signature, so you should at least register a listener for it or it will throw.
 
 See the [GitHub Webhooks documentation](https://developer.github.com/webhooks/) for more details on the events you can receive.
-
-Included in the distribution is an *events.json* file which maps the event names to descriptions taken from the API:
-
-```js
-const events = require('github-webhook-handler/events')
-Object.keys(events).forEach(function (event) {
-  console.log(event, '=', events[event])
-})
-```
 
 Additionally, there is a special `'*'` even you can listen to in order to receive _everything_.
 
